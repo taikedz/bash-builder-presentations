@@ -1,72 +1,118 @@
-### Server hovercraft Usage:help
-# add LIBS -- add extra libs
-# run -- run command in virtualenv environment
-# serve PRESENTATION -- serve a presentation from directory
+#&include std/autohelp.sh
+#&include std/out.sh
+##bash-libs: syntax-extensions.sh @ 6421286a (2.0.1)
+
+### Syntax Extensions Usage:syntax
+#
+# Syntax extensions for bash-builder.
+#
+# You will need to import this library if you use Bash Builder's extended syntax macros.
+#
+# You should not however use the functions directly, but the extended syntax instead.
+#
+##/doc
+
+### syntax-extensions:use FUNCNAME ARGNAMES ... Usage:syntax
+#
+# Consume arguments into named global variables.
+#
+# If not enough argument values are found, the first named variable that failed to be assigned is printed as error
+#
+# ARGNAMES prefixed with '?' do not trigger an error
+#
+# Example:
+#
+#   #%include out.sh
+#   #%include syntax-extensions.sh
+#
+#   get_parameters() {
+#       . <(syntax-extensions:use get_parameters INFILE OUTFILE ?comment)
+#
+#       [[ -f "$INFILE" ]]  || out:fail "Input file '$INFILE' does not exist"
+#       [[ -f "$OUTFILE" ]] || out:fail "Output file '$OUTFILE' does not exist"
+#
+#       [[ -z "$comment" ]] || echo "Note: $comment"
+#   }
+#
+#   main() {
+#       get_parameters "$@"
+#
+#       echo "$INFILE will be converted to $OUTFILE"
+#   }
+#
+#   main "$@"
+#
 ###/doc
+syntax-extensions:use() {
+    local argname arglist undef_f dec_scope argidx argone failmsg pos_ok
+    
+    dec_scope=""
+    [[ "${SYNTAXLIB_scope:-}" = local ]] || dec_scope=g
+    arglist=(:)
+    argone=\"\${1:-}\"
+    pos_ok=true
+    
+    for argname in "$@"; do
+        [[ "$argname" != -- ]] || break
+        [[ "$argname" =~ ^(\?|\*)?[0-9a-zA-Z_]+$ ]] || out:fail "Internal: Not a valid argument name '$argname'"
 
-##bash-libs: safe.sh @ 6421286a (2.0.1)
+        arglist+=("$argname")
+    done
 
-### Safe mode Usage:bbuild
-#
-# Set global safe mode options
-#
-# * Script bails if a statement or command returns non-zero status
-#   * except when in a conditional statement
-# * Accessing a variable that is not set is an error, causing non-zero status of the operation
-# * Prevents globs
-# * If a component of a pipe fails, the entire pipe statement returns non-zero
-#
-# Splitting over spaces
-# ---------------------
-#
-# You can also switch space splitting on or off (normal bash default is 'on')
-#
-# Given a function `foo()` that returns multiple lines, which may each have spaces in them, use safe splitting to return each item into an array as its own item, without splitting over spaces.
-#
-#   safe:space-split off
-#   mylist=(foo)
-#   safe:space-split on
-#
-# Having space splitting on causes statements like `echo "$*"` to print each argument on its own line.
-#
-# Globs
-# -------
-#
-# In safe mode, glob expansion like `ls .config/*` is turned off by default.
-#
-# You can turn glob expansion on and off with `safe:glob on` or `safe:glob off`
-#
-###/doc
+    argidx=1
+    while [[ "$argidx" -lt "${#arglist[@]}" ]]; do
+        argname="${arglist[$argidx]}"
+        failmsg="\"Internal : could not get '$argname' in function arguments\""
+        posfailmsg="Internal: positional argument '$argname' encountered after optional argument(s)"
 
-set -eufo pipefail
+        if [[ "$argname" =~ ^\? ]]; then
+            echo "$SYNTAXLIB_scope ${argname:1}=$argone; shift || :"
+            pos_ok=false
 
-safe:space-split() {
-    case "$1" in
-    off)
-        export IFS=$'\t\n'
-        ;;
-    on)
-        export IFS=$' \t\n'
-        ;;
-    *)
-        out:fail "API error: bad use of safe:split - must be 'on' or 'off' not '$1'"
-        ;;
-    esac
+        elif [[ "$argname" =~ ^\* ]]; then
+            [[ "$pos_ok" != false ]] || out:fail "$posfailmsg"
+            echo "declare -n${dec_scope} ${argname:1}=$argone; shift || out:fail $failmsg"
+
+        else
+            [[ "$pos_ok" != false ]] || out:fail "$posfailmsg"
+            echo "$SYNTAXLIB_scope ${argname}=$argone; shift || out:fail $failmsg"
+        fi
+
+        argidx=$((argidx + 1))
+    done
 }
 
-safe:glob() {
-    case "$1" in
-    off)
-        set -f
-        ;;
-    on)
-        set +f
-        ;;
-    *)
-        out:fail "API error: bad use of safe:glob - must be 'on' or 'off' not '$1'"
-        ;;
-    esac
+
+### syntax-extensions:use:local FUNCNAME ARGNAMES ... Usage:syntax
+# 
+# Enables syntax macro: function signatures
+#   e.g. $%function func(var1 var2) { ... }
+#
+# Build with bbuild to leverage this function's use:
+#
+#   #%include out.sh
+#   #%include syntax-extensions.sh
+#
+#   $%function person(name email) {
+#       echo "$name <$email>"
+#
+#       # $1 and $2 have been consumed into $name and $email
+#       # The rest remains available in $* :
+#       
+#       echo "Additional notes: $*"
+#   }
+#
+#   person "Jo Smith" "jsmith@example.com" Some details
+#
+###/doc
+syntax-extensions:use:local() {
+    SYNTAXLIB_scope=local syntax-extensions:use "$@"
 }
+
+args:use:local() {
+    syntax-extensions:use:local "$@"
+}
+
 ##bash-libs: tty.sh @ 6421286a (2.0.1)
 
 tty:is_ssh() {
@@ -316,317 +362,6 @@ function out:fail {
 ###/doc
 function out:error {
     echo "${CBRED}ERROR: ${CRED}$*$CDEF" 1>&2
-}
-##bash-libs: syntax-extensions.sh @ 6421286a (2.0.1)
-
-### Syntax Extensions Usage:syntax
-#
-# Syntax extensions for bash-builder.
-#
-# You will need to import this library if you use Bash Builder's extended syntax macros.
-#
-# You should not however use the functions directly, but the extended syntax instead.
-#
-##/doc
-
-### syntax-extensions:use FUNCNAME ARGNAMES ... Usage:syntax
-#
-# Consume arguments into named global variables.
-#
-# If not enough argument values are found, the first named variable that failed to be assigned is printed as error
-#
-# ARGNAMES prefixed with '?' do not trigger an error
-#
-# Example:
-#
-#   #%include out.sh
-#   #%include syntax-extensions.sh
-#
-#   get_parameters() {
-#       . <(syntax-extensions:use get_parameters INFILE OUTFILE ?comment)
-#
-#       [[ -f "$INFILE" ]]  || out:fail "Input file '$INFILE' does not exist"
-#       [[ -f "$OUTFILE" ]] || out:fail "Output file '$OUTFILE' does not exist"
-#
-#       [[ -z "$comment" ]] || echo "Note: $comment"
-#   }
-#
-#   main() {
-#       get_parameters "$@"
-#
-#       echo "$INFILE will be converted to $OUTFILE"
-#   }
-#
-#   main "$@"
-#
-###/doc
-syntax-extensions:use() {
-    local argname arglist undef_f dec_scope argidx argone failmsg pos_ok
-    
-    dec_scope=""
-    [[ "${SYNTAXLIB_scope:-}" = local ]] || dec_scope=g
-    arglist=(:)
-    argone=\"\${1:-}\"
-    pos_ok=true
-    
-    for argname in "$@"; do
-        [[ "$argname" != -- ]] || break
-        [[ "$argname" =~ ^(\?|\*)?[0-9a-zA-Z_]+$ ]] || out:fail "Internal: Not a valid argument name '$argname'"
-
-        arglist+=("$argname")
-    done
-
-    argidx=1
-    while [[ "$argidx" -lt "${#arglist[@]}" ]]; do
-        argname="${arglist[$argidx]}"
-        failmsg="\"Internal : could not get '$argname' in function arguments\""
-        posfailmsg="Internal: positional argument '$argname' encountered after optional argument(s)"
-
-        if [[ "$argname" =~ ^\? ]]; then
-            echo "$SYNTAXLIB_scope ${argname:1}=$argone; shift || :"
-            pos_ok=false
-
-        elif [[ "$argname" =~ ^\* ]]; then
-            [[ "$pos_ok" != false ]] || out:fail "$posfailmsg"
-            echo "declare -n${dec_scope} ${argname:1}=$argone; shift || out:fail $failmsg"
-
-        else
-            [[ "$pos_ok" != false ]] || out:fail "$posfailmsg"
-            echo "$SYNTAXLIB_scope ${argname}=$argone; shift || out:fail $failmsg"
-        fi
-
-        argidx=$((argidx + 1))
-    done
-}
-
-
-### syntax-extensions:use:local FUNCNAME ARGNAMES ... Usage:syntax
-# 
-# Enables syntax macro: function signatures
-#   e.g. $%function func(var1 var2) { ... }
-#
-# Build with bbuild to leverage this function's use:
-#
-#   #%include out.sh
-#   #%include syntax-extensions.sh
-#
-#   $%function person(name email) {
-#       echo "$name <$email>"
-#
-#       # $1 and $2 have been consumed into $name and $email
-#       # The rest remains available in $* :
-#       
-#       echo "Additional notes: $*"
-#   }
-#
-#   person "Jo Smith" "jsmith@example.com" Some details
-#
-###/doc
-syntax-extensions:use:local() {
-    SYNTAXLIB_scope=local syntax-extensions:use "$@"
-}
-
-args:use:local() {
-    syntax-extensions:use:local "$@"
-}
-
-##bash-libs: autohelp.sh @ 6421286a (2.0.1)
-
-### Autohelp Usage:bbuild
-#
-# Autohelp provides some simple facilities for defining help as comments in your code.
-# It provides several functions for printing specially formatted comment sections.
-#
-# Write your help as documentation comments in your script
-#
-# To output a named section from your script, or a file, call the
-# `autohelp:print` function and it will print the help documentation
-# in the current script, or specified file, to stdout
-#
-# A help comment looks like this:
-#
-#    ### <title> Usage:help
-#    #
-#    # <some content>
-#    #
-#    # end with "###/doc" on its own line (whitespaces before
-#    # and after are OK)
-#    #
-#    ###/doc
-#
-# It can then be printed from the same script by simply calling
-#
-#   autohelp:print
-#
-# You can print a different section by specifying a different name
-#
-# 	autohelp:print section2
-#
-# > This would print a section defined in this way:
-#
-# 	### Some title Usage:section2
-# 	# <some content>
-# 	###/doc
-#
-# You can set a different comment character by setting the 'HELPCHAR' environment variable.
-# Typically, you might want to print comments you set in a INI config file, for example
-#
-# 	HELPCHAR=";" autohelp:print help config-file.ini
-# 
-# Which would then find comments defined like this in `config-file.ini`:
-#
-#   ;;; Main config Usage:help
-#   ; Help comments in a config file
-#   ; may start with a different comment character
-#   ;;;/doc
-#
-#
-#
-# Example usage in a multi-function script:
-#
-#   #!usr/bin/env bash
-#
-#   ### Main help Usage:help
-#   # The main help
-#   ###/doc
-#
-#   ### Feature One Usage:feature_1
-#   # Help text for the first feature
-#   ###/doc
-#
-#   feature1() {
-#       autohelp:check:section feature_1 "$@"
-#       echo "Feature I"
-#   }
-#
-#   ### Feature Two Usage:feature_2
-#   # Help text for the second feature
-#   ###/doc
-#
-#   feature2() {
-#       autohelp:check:section feature_2 "$@"
-#       echo "Feature II"
-#   }
-#
-#   main() {
-#       case "$1" in
-#       feature1|feature2)
-#           "$1" "$@"            # Pass the global script arguments through
-#           ;;
-#       *)
-#           autohelp:check-no-null "$@"  # Check if main help was asked for, if so, or if no args, exit with help
-#
-#           # Main help not requested, return error
-#           echo "Unknown feature"
-#           exit 1
-#           ;;
-#       esac
-#   }
-#
-#   main "$@"
-#
-###/doc
-
-### autohelp:print [ SECTION [FILE] ] Usage:bbuild
-# Print the specified section, in the specified file.
-#
-# If no file is specified, prints for current script file.
-# If no section is specified, defaults to "help"
-###/doc
-
-HELPCHAR='#'
-
-autohelp:print() {
-    local input_line
-    local section_string="${1:-}"; shift || :
-    local target_file="${1:-}"; shift || :
-    [[ -n "$section_string" ]] || section_string=help
-    [[ -n "$target_file" ]] || target_file="$0"
-
-    local sec_start='^\s*'"$HELPCHAR$HELPCHAR$HELPCHAR"'\s+(.+?)\s+Usage:'"$section_string"'\s*$'
-    local sec_end='^\s*'"$HELPCHAR$HELPCHAR$HELPCHAR"'\s*/doc\s*$'
-    local in_section=false
-
-    while read input_line; do
-        if [[ "$input_line" =~ $sec_start ]]; then
-            in_section=true
-            echo -e "\n${BASH_REMATCH[1]}\n======="
-
-        elif [[ "$in_section" = true ]]; then
-            if [[ "$input_line" =~ $sec_end ]]; then
-                in_section=false
-            else
-                echo "$input_line" | sed -r "s/^\s*$HELPCHAR/ /;s/^  (\S)/\1/"
-            fi
-        fi
-    done < "$target_file"
-
-    if [[ "$in_section" = true ]]; then
-            out:fail "Non-terminated help block."
-    fi
-}
-
-### autohelp:paged Usage:bbuild
-#
-# Display the help in the pager defined in the PAGER environment variable
-#
-###/doc
-autohelp:paged() {
-    : ${PAGER=less}
-    autohelp:print "$@" | $PAGER
-}
-
-### autohelp:check-or-null ARGS ... Usage:bbuild
-# Print help if arguments are empty, or if arguments contain a '--help' token
-#
-###/doc
-autohelp:check-or-null() {
-    if [[ -z "$*" ]]; then
-        autohelp:print help "$0"
-        exit 0
-    else
-        autohelp:check:section "help" "$@"
-    fi
-}
-
-### autohelp:check-or-null:section SECTION ARGS ... Usage:bbuild
-# Print help section SECTION if arguments are empty, or if arguments contain a '--help' token
-#
-###/doc
-autohelp:check-or-null:section() {
-    . <(args:use:local section -- "$@") ; 
-    if [[ -z "$*" ]]; then
-        autohelp:print "$section" "$0"
-        exit 0
-    else
-        autohelp:check:section "$section" "$@"
-    fi
-}
-
-### autohelp:check ARGS ... Usage:bbuild
-#
-# Automatically print "help" sections and exit, if "--help" is detected in arguments
-#
-###/doc
-autohelp:check() {
-    autohelp:check:section "help" "$@"
-}
-
-### autohelp:check:section SECTION ARGS ... Usage:bbuild
-# Automatically print documentation for named section and exit, if "--help" is detected in arguments
-#
-###/doc
-autohelp:check:section() {
-    local section arg
-    section="${1:-}"; shift || out:fail "No help section specified"
-
-    for arg in "$@"; do
-        if [[ "$arg" =~ --help ]]; then
-            cols="$(tput cols)"
-            autohelp:print "$section" | fold -w "$cols" -s || autohelp:print "$section"
-            exit 0
-        fi
-    done
 }
 ##bash-libs: bincheck.sh @ 6421286a (2.0.1)
 
@@ -879,13 +614,20 @@ pyvenv:add() {
     fi
 }
 
-serve-presentation() {
+### hovercraft:serve MAINFILE Usage:bashdoc
+# Build the presentation based on MAINFILE
+#
+# Opens a browser session with the presentation
+###/doc
+
+hovercraft:serve() {
     . <(args:use:local mainfile -- "$@") ; 
-    mkdir -p presentation
-    local pdir="$(mktemp -d "presentation/$(varify:fil "$mainfile")-XXXX")"
+    mkdir -p presentation-hovercraft
+    local pdir="$(mktemp -d "presentation-hovercraft/$(varify:fil "$mainfile")-XXXX")"
+
     hovercraft "$mainfile" "$pdir"
     local runtime
-    runtime="$(bincheck:get sensible-browser firefox chromium chrome gnome-www-browser epiphany x-www-browser www-browser)"
+    runtime="$(bincheck:get sensible-browser firefox chromium chrome gnome-www-browser epiphany x-www-browser www-browser)" || return 1
 
     "$runtime" "$pdir/index.html"
 }
@@ -904,7 +646,7 @@ main() {
     run)
         "$@" ;;
     serve)
-        serve-presentation "$@" ;;
+        hovercraft:serve "$@" ;;
     *)
         autohelp:print
         out:fail "Unknown action";;

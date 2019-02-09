@@ -8,4 +8,4 @@ Runtime script is built with bash-builder
 
 Run a presentation:
 
-    bin/hover.sh server PRESENTATIONDIR
+    bin/hover.sh serve PRESENTATION_MAIN_FILE
