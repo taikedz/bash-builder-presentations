@@ -1,5 +1,5 @@
-#&include std/autohelp.sh
-#&include std/out.sh
+#%include std/autohelp.sh
+#%include std/out.sh
 #%include std/syntax-extensions.sh
 
 #%include app/pyvenv.sh

@@ -1,118 +1,3 @@
-#&include std/autohelp.sh
-#&include std/out.sh
-##bash-libs: syntax-extensions.sh @ 6421286a (2.0.1)
-
-### Syntax Extensions Usage:syntax
-#
-# Syntax extensions for bash-builder.
-#
-# You will need to import this library if you use Bash Builder's extended syntax macros.
-#
-# You should not however use the functions directly, but the extended syntax instead.
-#
-##/doc
-
-### syntax-extensions:use FUNCNAME ARGNAMES ... Usage:syntax
-#
-# Consume arguments into named global variables.
-#
-# If not enough argument values are found, the first named variable that failed to be assigned is printed as error
-#
-# ARGNAMES prefixed with '?' do not trigger an error
-#
-# Example:
-#
-#   #%include out.sh
-#   #%include syntax-extensions.sh
-#
-#   get_parameters() {
-#       . <(syntax-extensions:use get_parameters INFILE OUTFILE ?comment)
-#
-#       [[ -f "$INFILE" ]]  || out:fail "Input file '$INFILE' does not exist"
-#       [[ -f "$OUTFILE" ]] || out:fail "Output file '$OUTFILE' does not exist"
-#
-#       [[ -z "$comment" ]] || echo "Note: $comment"
-#   }
-#
-#   main() {
-#       get_parameters "$@"
-#
-#       echo "$INFILE will be converted to $OUTFILE"
-#   }
-#
-#   main "$@"
-#
-###/doc
-syntax-extensions:use() {
-    local argname arglist undef_f dec_scope argidx argone failmsg pos_ok
-    
-    dec_scope=""
-    [[ "${SYNTAXLIB_scope:-}" = local ]] || dec_scope=g
-    arglist=(:)
-    argone=\"\${1:-}\"
-    pos_ok=true
-    
-    for argname in "$@"; do
-        [[ "$argname" != -- ]] || break
-        [[ "$argname" =~ ^(\?|\*)?[0-9a-zA-Z_]+$ ]] || out:fail "Internal: Not a valid argument name '$argname'"
-
-        arglist+=("$argname")
-    done
-
-    argidx=1
-    while [[ "$argidx" -lt "${#arglist[@]}" ]]; do
-        argname="${arglist[$argidx]}"
-        failmsg="\"Internal : could not get '$argname' in function arguments\""
-        posfailmsg="Internal: positional argument '$argname' encountered after optional argument(s)"
-
-        if [[ "$argname" =~ ^\? ]]; then
-            echo "$SYNTAXLIB_scope ${argname:1}=$argone; shift || :"
-            pos_ok=false
-
-        elif [[ "$argname" =~ ^\* ]]; then
-            [[ "$pos_ok" != false ]] || out:fail "$posfailmsg"
-            echo "declare -n${dec_scope} ${argname:1}=$argone; shift || out:fail $failmsg"
-
-        else
-            [[ "$pos_ok" != false ]] || out:fail "$posfailmsg"
-            echo "$SYNTAXLIB_scope ${argname}=$argone; shift || out:fail $failmsg"
-        fi
-
-        argidx=$((argidx + 1))
-    done
-}
-
-
-### syntax-extensions:use:local FUNCNAME ARGNAMES ... Usage:syntax
-# 
-# Enables syntax macro: function signatures
-#   e.g. $%function func(var1 var2) { ... }
-#
-# Build with bbuild to leverage this function's use:
-#
-#   #%include out.sh
-#   #%include syntax-extensions.sh
-#
-#   $%function person(name email) {
-#       echo "$name <$email>"
-#
-#       # $1 and $2 have been consumed into $name and $email
-#       # The rest remains available in $* :
-#       
-#       echo "Additional notes: $*"
-#   }
-#
-#   person "Jo Smith" "jsmith@example.com" Some details
-#
-###/doc
-syntax-extensions:use:local() {
-    SYNTAXLIB_scope=local syntax-extensions:use "$@"
-}
-
-args:use:local() {
-    syntax-extensions:use:local "$@"
-}
-
 ##bash-libs: tty.sh @ 6421286a (2.0.1)
 
 tty:is_ssh() {
@@ -363,124 +248,316 @@ function out:fail {
 function out:error {
     echo "${CBRED}ERROR: ${CRED}$*$CDEF" 1>&2
 }
-##bash-libs: bincheck.sh @ 6421286a (2.0.1)
+##bash-libs: syntax-extensions.sh @ 6421286a (2.0.1)
 
-### bincheck:get COMMANDS ... Usage:bbuild
+### Syntax Extensions Usage:syntax
 #
-# Return the first existing binary
+# Syntax extensions for bash-builder.
 #
-# Useful for finding an appropriate binary when you know
-# different systems may supply binaries under different names.
+# You will need to import this library if you use Bash Builder's extended syntax macros.
 #
-# Returns the full path from `which` for the first executable
-# encountered.
+# You should not however use the functions directly, but the extended syntax instead.
+#
+##/doc
+
+### syntax-extensions:use FUNCNAME ARGNAMES ... Usage:syntax
+#
+# Consume arguments into named global variables.
+#
+# If not enough argument values are found, the first named variable that failed to be assigned is printed as error
+#
+# ARGNAMES prefixed with '?' do not trigger an error
 #
 # Example:
 #
-# 	bincheck:get markdown_py markdown ./mymarkdown
+#   #%include out.sh
+#   #%include syntax-extensions.sh
 #
-# Tries in turn to get a `markdown_py`, then a `markdown`, and then a local `./mymarkdown`
+#   get_parameters() {
+#       . <(syntax-extensions:use get_parameters INFILE OUTFILE ?comment)
+#
+#       [[ -f "$INFILE" ]]  || out:fail "Input file '$INFILE' does not exist"
+#       [[ -f "$OUTFILE" ]] || out:fail "Output file '$OUTFILE' does not exist"
+#
+#       [[ -z "$comment" ]] || echo "Note: $comment"
+#   }
+#
+#   main() {
+#       get_parameters "$@"
+#
+#       echo "$INFILE will be converted to $OUTFILE"
+#   }
+#
+#   main "$@"
+#
+###/doc
+syntax-extensions:use() {
+    local argname arglist undef_f dec_scope argidx argone failmsg pos_ok
+    
+    dec_scope=""
+    [[ "${SYNTAXLIB_scope:-}" = local ]] || dec_scope=g
+    arglist=(:)
+    argone=\"\${1:-}\"
+    pos_ok=true
+    
+    for argname in "$@"; do
+        [[ "$argname" != -- ]] || break
+        [[ "$argname" =~ ^(\?|\*)?[0-9a-zA-Z_]+$ ]] || out:fail "Internal: Not a valid argument name '$argname'"
+
+        arglist+=("$argname")
+    done
+
+    argidx=1
+    while [[ "$argidx" -lt "${#arglist[@]}" ]]; do
+        argname="${arglist[$argidx]}"
+        failmsg="\"Internal : could not get '$argname' in function arguments\""
+        posfailmsg="Internal: positional argument '$argname' encountered after optional argument(s)"
+
+        if [[ "$argname" =~ ^\? ]]; then
+            echo "$SYNTAXLIB_scope ${argname:1}=$argone; shift || :"
+            pos_ok=false
+
+        elif [[ "$argname" =~ ^\* ]]; then
+            [[ "$pos_ok" != false ]] || out:fail "$posfailmsg"
+            echo "declare -n${dec_scope} ${argname:1}=$argone; shift || out:fail $failmsg"
+
+        else
+            [[ "$pos_ok" != false ]] || out:fail "$posfailmsg"
+            echo "$SYNTAXLIB_scope ${argname}=$argone; shift || out:fail $failmsg"
+        fi
+
+        argidx=$((argidx + 1))
+    done
+}
+
+
+### syntax-extensions:use:local FUNCNAME ARGNAMES ... Usage:syntax
+# 
+# Enables syntax macro: function signatures
+#   e.g. $%function func(var1 var2) { ... }
+#
+# Build with bbuild to leverage this function's use:
+#
+#   #%include out.sh
+#   #%include syntax-extensions.sh
+#
+#   $%function person(name email) {
+#       echo "$name <$email>"
+#
+#       # $1 and $2 have been consumed into $name and $email
+#       # The rest remains available in $* :
+#       
+#       echo "Additional notes: $*"
+#   }
+#
+#   person "Jo Smith" "jsmith@example.com" Some details
+#
+###/doc
+syntax-extensions:use:local() {
+    SYNTAXLIB_scope=local syntax-extensions:use "$@"
+}
+
+args:use:local() {
+    syntax-extensions:use:local "$@"
+}
+
+##bash-libs: autohelp.sh @ 6421286a (2.0.1)
+
+### Autohelp Usage:bbuild
+#
+# Autohelp provides some simple facilities for defining help as comments in your code.
+# It provides several functions for printing specially formatted comment sections.
+#
+# Write your help as documentation comments in your script
+#
+# To output a named section from your script, or a file, call the
+# `autohelp:print` function and it will print the help documentation
+# in the current script, or specified file, to stdout
+#
+# A help comment looks like this:
+#
+#    ### <title> Usage:help
+#    #
+#    # <some content>
+#    #
+#    # end with "###/doc" on its own line (whitespaces before
+#    # and after are OK)
+#    #
+#    ###/doc
+#
+# It can then be printed from the same script by simply calling
+#
+#   autohelp:print
+#
+# You can print a different section by specifying a different name
+#
+# 	autohelp:print section2
+#
+# > This would print a section defined in this way:
+#
+# 	### Some title Usage:section2
+# 	# <some content>
+# 	###/doc
+#
+# You can set a different comment character by setting the 'HELPCHAR' environment variable.
+# Typically, you might want to print comments you set in a INI config file, for example
+#
+# 	HELPCHAR=";" autohelp:print help config-file.ini
+# 
+# Which would then find comments defined like this in `config-file.ini`:
+#
+#   ;;; Main config Usage:help
+#   ; Help comments in a config file
+#   ; may start with a different comment character
+#   ;;;/doc
+#
+#
+#
+# Example usage in a multi-function script:
+#
+#   #!usr/bin/env bash
+#
+#   ### Main help Usage:help
+#   # The main help
+#   ###/doc
+#
+#   ### Feature One Usage:feature_1
+#   # Help text for the first feature
+#   ###/doc
+#
+#   feature1() {
+#       autohelp:check:section feature_1 "$@"
+#       echo "Feature I"
+#   }
+#
+#   ### Feature Two Usage:feature_2
+#   # Help text for the second feature
+#   ###/doc
+#
+#   feature2() {
+#       autohelp:check:section feature_2 "$@"
+#       echo "Feature II"
+#   }
+#
+#   main() {
+#       case "$1" in
+#       feature1|feature2)
+#           "$1" "$@"            # Pass the global script arguments through
+#           ;;
+#       *)
+#           autohelp:check-no-null "$@"  # Check if main help was asked for, if so, or if no args, exit with help
+#
+#           # Main help not requested, return error
+#           echo "Unknown feature"
+#           exit 1
+#           ;;
+#       esac
+#   }
+#
+#   main "$@"
 #
 ###/doc
 
-bincheck:get() {
-    local BINEXE=
-    for binname in "$@"; do
-        # Some implementations of `which` print error messages
-        # Not useful here.
-        BINEXE=$(which "$binname" 2>/dev/null)
+### autohelp:print [ SECTION [FILE] ] Usage:bbuild
+# Print the specified section, in the specified file.
+#
+# If no file is specified, prints for current script file.
+# If no section is specified, defaults to "help"
+###/doc
 
-        if [[ -n "$BINEXE" ]]; then
-            echo "$BINEXE"
-            return 0
+HELPCHAR='#'
+
+autohelp:print() {
+    local input_line
+    local section_string="${1:-}"; shift || :
+    local target_file="${1:-}"; shift || :
+    [[ -n "$section_string" ]] || section_string=help
+    [[ -n "$target_file" ]] || target_file="$0"
+
+    local sec_start='^\s*'"$HELPCHAR$HELPCHAR$HELPCHAR"'\s+(.+?)\s+Usage:'"$section_string"'\s*$'
+    local sec_end='^\s*'"$HELPCHAR$HELPCHAR$HELPCHAR"'\s*/doc\s*$'
+    local in_section=false
+
+    while read input_line; do
+        if [[ "$input_line" =~ $sec_start ]]; then
+            in_section=true
+            echo -e "\n${BASH_REMATCH[1]}\n======="
+
+        elif [[ "$in_section" = true ]]; then
+            if [[ "$input_line" =~ $sec_end ]]; then
+                in_section=false
+            else
+                echo "$input_line" | sed -r "s/^\s*$HELPCHAR/ /;s/^  (\S)/\1/"
+            fi
+        fi
+    done < "$target_file"
+
+    if [[ "$in_section" = true ]]; then
+            out:fail "Non-terminated help block."
+    fi
+}
+
+### autohelp:paged Usage:bbuild
+#
+# Display the help in the pager defined in the PAGER environment variable
+#
+###/doc
+autohelp:paged() {
+    : ${PAGER=less}
+    autohelp:print "$@" | $PAGER
+}
+
+### autohelp:check-or-null ARGS ... Usage:bbuild
+# Print help if arguments are empty, or if arguments contain a '--help' token
+#
+###/doc
+autohelp:check-or-null() {
+    if [[ -z "$*" ]]; then
+        autohelp:print help "$0"
+        exit 0
+    else
+        autohelp:check:section "help" "$@"
+    fi
+}
+
+### autohelp:check-or-null:section SECTION ARGS ... Usage:bbuild
+# Print help section SECTION if arguments are empty, or if arguments contain a '--help' token
+#
+###/doc
+autohelp:check-or-null:section() {
+    . <(args:use:local section -- "$@") ; 
+    if [[ -z "$*" ]]; then
+        autohelp:print "$section" "$0"
+        exit 0
+    else
+        autohelp:check:section "$section" "$@"
+    fi
+}
+
+### autohelp:check ARGS ... Usage:bbuild
+#
+# Automatically print "help" sections and exit, if "--help" is detected in arguments
+#
+###/doc
+autohelp:check() {
+    autohelp:check:section "help" "$@"
+}
+
+### autohelp:check:section SECTION ARGS ... Usage:bbuild
+# Automatically print documentation for named section and exit, if "--help" is detected in arguments
+#
+###/doc
+autohelp:check:section() {
+    local section arg
+    section="${1:-}"; shift || out:fail "No help section specified"
+
+    for arg in "$@"; do
+        if [[ "$arg" =~ --help ]]; then
+            cols="$(tput cols)"
+            autohelp:print "$section" | fold -w "$cols" -s || autohelp:print "$section"
+            exit 0
         fi
     done
-    return 1
-}
-
-### bincheck:has NAMES ... Usage:bbuild
-#
-# Determine if at least one of the binaries listed is present and installed on the system
-#
-###/doc
-
-bincheck:has() {
-    [[ -n "$(bincheck:get "$@")" ]]
-}
-
-### bincheck:path NAME Usage:bbuild
-#
-# Determine the actual path to the command
-#
-# Relative paths are not expanded.
-#
-###/doc
-
-bincheck:path() {
-    local binname="$1"; shift || :
-
-    [[ "$binname" =~ / ]] && { 
-        # A relative path cannot be resolved, just check existence
-        [[ -e "$binname" ]] && echo "$binname" || return 1
-
-    } || binname="$(which "$binname" 2>/dev/null)"
-
-    # `which` failed
-    [[ -n "$binname" ]] || return 1
-
-    [[ -h "$binname" ]] && {
-
-        local pointedname="$(ls -l "$binname"|grep -oP "$binname.+"|sed "s|$binname -> ||")"
-        bincheck:path "$pointedname" ; return "$?"
-    
-    } || echo "$binname"
-}
-##bash-libs: varify.sh @ 6421286a (2.0.1)
-
-### Varify Usage:bbuild
-# Make a string into a valid variable name or file name
-#
-# Collapses any string of invalid characters into a single underscore
-#
-# For example
-#
-# 	varify:var "http://example.com"
-#
-# returns
-#
-# 	http_example.com
-#
-###/doc
-
-### varify:var Usage:bbuild
-#
-# Valid characters for varify:var are:
-#
-# * a-z
-# * A-Z
-# * 0-9
-# * underscore ("_")
-###/doc
-function varify:var {
-    echo "$*" | sed -r 's/[^a-zA-Z0-9_]/_/g'
-}
-
-### varify:fil Usage:bbuild
-#
-# Valid characters for varify:fil are:
-#
-# * a-z
-# * A-Z
-# * 0-9
-# * underscore ("_")
-# * dash ("-")
-# * period (".")
-#
-# Can be used to produce filenames.
-#
-###/doc
-function varify:fil {
-    echo "$*" | sed -r 's/[^a-zA-Z0-9_.-]/_/g'
 }
 
 ##bash-libs: abspath.sh @ 6421286a (2.0.1)
@@ -613,6 +690,125 @@ pyvenv:add() {
         return 101
     fi
 }
+##bash-libs: bincheck.sh @ 6421286a (2.0.1)
+
+### bincheck:get COMMANDS ... Usage:bbuild
+#
+# Return the first existing binary
+#
+# Useful for finding an appropriate binary when you know
+# different systems may supply binaries under different names.
+#
+# Returns the full path from `which` for the first executable
+# encountered.
+#
+# Example:
+#
+# 	bincheck:get markdown_py markdown ./mymarkdown
+#
+# Tries in turn to get a `markdown_py`, then a `markdown`, and then a local `./mymarkdown`
+#
+###/doc
+
+bincheck:get() {
+    local BINEXE=
+    for binname in "$@"; do
+        # Some implementations of `which` print error messages
+        # Not useful here.
+        BINEXE=$(which "$binname" 2>/dev/null)
+
+        if [[ -n "$BINEXE" ]]; then
+            echo "$BINEXE"
+            return 0
+        fi
+    done
+    return 1
+}
+
+### bincheck:has NAMES ... Usage:bbuild
+#
+# Determine if at least one of the binaries listed is present and installed on the system
+#
+###/doc
+
+bincheck:has() {
+    [[ -n "$(bincheck:get "$@")" ]]
+}
+
+### bincheck:path NAME Usage:bbuild
+#
+# Determine the actual path to the command
+#
+# Relative paths are not expanded.
+#
+###/doc
+
+bincheck:path() {
+    local binname="$1"; shift || :
+
+    [[ "$binname" =~ / ]] && { 
+        # A relative path cannot be resolved, just check existence
+        [[ -e "$binname" ]] && echo "$binname" || return 1
+
+    } || binname="$(which "$binname" 2>/dev/null)"
+
+    # `which` failed
+    [[ -n "$binname" ]] || return 1
+
+    [[ -h "$binname" ]] && {
+
+        local pointedname="$(ls -l "$binname"|grep -oP "$binname.+"|sed "s|$binname -> ||")"
+        bincheck:path "$pointedname" ; return "$?"
+    
+    } || echo "$binname"
+}
+##bash-libs: varify.sh @ 6421286a (2.0.1)
+
+### Varify Usage:bbuild
+# Make a string into a valid variable name or file name
+#
+# Collapses any string of invalid characters into a single underscore
+#
+# For example
+#
+# 	varify:var "http://example.com"
+#
+# returns
+#
+# 	http_example.com
+#
+###/doc
+
+### varify:var Usage:bbuild
+#
+# Valid characters for varify:var are:
+#
+# * a-z
+# * A-Z
+# * 0-9
+# * underscore ("_")
+###/doc
+function varify:var {
+    echo "$*" | sed -r 's/[^a-zA-Z0-9_]/_/g'
+}
+
+### varify:fil Usage:bbuild
+#
+# Valid characters for varify:fil are:
+#
+# * a-z
+# * A-Z
+# * 0-9
+# * underscore ("_")
+# * dash ("-")
+# * period (".")
+#
+# Can be used to produce filenames.
+#
+###/doc
+function varify:fil {
+    echo "$*" | sed -r 's/[^a-zA-Z0-9_.-]/_/g'
+}
 
 ### hovercraft:serve MAINFILE Usage:bashdoc
 # Build the presentation based on MAINFILE
@@ -629,7 +825,7 @@ hovercraft:serve() {
     local runtime
     runtime="$(bincheck:get sensible-browser firefox chromium chrome gnome-www-browser epiphany x-www-browser www-browser)" || return 1
 
-    "$runtime" "$pdir/index.html"
+    "$runtime" "file://$PWD/$pdir/index.html"
 }
 
 main() {
