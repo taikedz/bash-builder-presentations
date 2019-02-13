@@ -1,8 +1,6 @@
 #!/bin/bash
 
-mode="$1"
-
-if [ "$mode" = on ]; then
+if [ "$1" = on ]; then
 
 ufw deny 80
 ufw deny 8080

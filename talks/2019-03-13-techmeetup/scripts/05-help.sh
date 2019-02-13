@@ -1,5 +1,5 @@
-### portplug.sh [PORTS] Usage:ehlp
-# 
+### portplug.sh [PORTS] Usage:help
+#
 # Prevent known insecure ports from being used.
 #
 # By default: 80, 8080, 25

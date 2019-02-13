@@ -38,13 +38,16 @@ function die() {
 }
 
 function setmode() {
-    mode="$1"; shift
+    # Use the variable names passed down to refrence up
 
-    declare -n ports
-    ports="$1"; shift
+    declare -n p_action="${1:-}"; shift ||
+        die "No action reference passed"
 
-    for port in "${ports[@]}"; do
-        ufw "${mode[@]}" "${port[@]}"
+    declare -n p_ports="${1:-}"; shift ||
+        die "No ports list reference passed"
+
+    for port in "${p_ports[@]}"; do
+        ufw "${p_action[@]}" "$port"
     done
 }
 
@@ -53,14 +56,16 @@ function main() {
         printhelp
     fi
 
+    local ufw_action
+
     local mode="${1:-}"; shift ||
         die $ERR_no_mode "Please specify a mode ('on' or 'off')"
     local ports=("${DEFAULT_PORTS[@]}")
 
     if [[ "$mode" = on ]]; then
-        mode=(deny)
+        ufw_action=(deny)
     elif [[ "$mode" = off ]]; then
-        mode=(delete deny)
+        ufw_action=(delete deny)
     else
         die $ERR_no_mode "Invalid mode passed '$mode'"
     fi
@@ -68,7 +73,7 @@ function main() {
     if [[ -n "$*" ]]; then ports=("$@") ; fi
 
     echo "Processing ${ports[*]}"
-    setmode "$mode" ports || {
+    setmode ufw_action ports || {
         printhelp
         die $ERR_bad_ports "Could not process ${ports[*]}"
     }

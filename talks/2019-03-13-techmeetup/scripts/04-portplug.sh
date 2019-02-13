@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-### portplug.sh [PORTS] Usage:ehlp
+### portplug.sh [PORTS] Usage:help
 # 
 # Prevent known insecure ports from being used.
 #
@@ -27,11 +27,11 @@ readonly ERR_no_error_code=101
 readonly ERR_NaN=102
 readonly ERR_bad_ports=103
 
-$%function applymode(mode *p_ports) {
+$%function applymode(*p_action *p_ports) {
     local port
 
     for port in "${p_ports[@]}"; do
-        ufw "${mode[@]}" "${port[@]}"
+        ufw "${p_action[@]}" "$port"
     done
 }
 
@@ -44,14 +44,14 @@ $%function useports(*p_portsvar) {
 }
 
 $%function main(mode) {
-    local ports
+    local ports ufw_action
     useports ports "$@"
 
-    case "$mode"
+    case "$mode" in
     on)
-        mode=(deny) ;;
+        ufw_action=(deny) ;;
     off)
-        mode=(delete deny) ;;
+        ufw_action=(delete deny) ;;
     *)
         autohelp:print
         out:fail $ERR_no_mode "Invalid mode passed '$mode'" ;;
@@ -59,10 +59,10 @@ $%function main(mode) {
 
     echo "Processing ${ports[*]}"
 
-    applymode "$mode" ports ||
+    applymode ufw_action ports ||
         out:fail $ERR_bad_ports "Could not process ${ports[*]}"
 }
 
-autohelp:check "$@"
+autohelp:check-or-null "$@"
 main "$@"
 

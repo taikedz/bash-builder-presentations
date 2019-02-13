@@ -1,10 +1,10 @@
 #%include std/syntax-extensions.sh
 
-$%function pplug:ports:applymode(mode *p_ports) {
+$%function pplug:ports:applymode(*p_action *p_ports) {
     local port
 
     for port in "${p_ports[@]}"; do
-        ufw "${mode[@]}" "${port[@]}"
+        ufw "${p_action[@]}" "$port"
     done
 }
 

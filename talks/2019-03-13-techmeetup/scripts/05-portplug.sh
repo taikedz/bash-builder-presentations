@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 #%include std/out.sh
+#%include std/isroot.sh
 #%include std/autohelp.sh
 #%include std/syntax-extensions.sh
 
@@ -17,15 +18,17 @@ readonly ERR_NaN=102
 readonly ERR_bad_ports=103
 
 $%function pplug:main(?mode) {
-    autohelp:check "$mode" "$@"
-    local ports
-    useports ports "$@"
+    autohelp:check-or-null "$mode" "$@"
+    isroot:require "You must be root to run this script"
 
-    case "$mode"
+    local ports
+    pplug:ports:useports ports "$@"
+
+    case "$mode" in
     on)
-        mode=(deny) ;;
+        ufw_action=(deny) ;;
     off)
-        mode=(delete deny) ;;
+        ufw_action=(delete deny) ;;
     *)
         autohelp:print
         out:fail $ERR_no_mode "Invalid mode passed '$mode'" ;;
@@ -33,7 +36,7 @@ $%function pplug:main(?mode) {
 
     echo "Processing ${ports[*]}"
 
-    pplug:ports:applymode "$mode" ports ||
+    pplug:ports:applymode ufw_action ports ||
         out:fail $ERR_bad_ports "Could not process ${ports[*]}"
 }
 
