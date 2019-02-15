@@ -250,13 +250,26 @@ Bash Builder
 * namespace functions
 
 .. note::
-    
+
     04
+
+    Common re-usable scripts provided by bash-libs
+
+=====
+
+Bash Builder
+------------
+
+And of course, separate out our own code
+
+.. note::
+    
+    05
 
     * Multiple files
         * no double-inclusion
     * includes from the perspecitve of the main built script
-    * namespace functions
+    * namespace our functions too!
 
 =====
 
