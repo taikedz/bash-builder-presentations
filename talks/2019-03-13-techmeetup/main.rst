@@ -1,31 +1,24 @@
 :title: Building Better Bash Scripts
 :css: css/main.css
 
-Pre-presentation prep:
-
-* open our-pxe and remaster.sh in a new CLI
-* open scripts/ in a new CLI and `vim *-portplug.sh`
-* open bash-libs in new CLI
-* open github/taikedz/ in new CLI
-    * ensure access to
-        * test.sh from bash-libs
-        * alpacka -- paf
-        * git-shortcuts
-        * webserver.sh
-* open https://github.com/taikedz/bash-builder/tree/master/docs in a browser
-
 =====
 
 Building Better Bash
 ====================
 
 Tai Kedzierski
+--------------
 
 2019's March 13th TechMeetup
 
 .. note::
 
-    I've heard justification for 03/13/19 as "it's easier to say"
+    Pre-presentation prep: run talks/2019-03-013-techmeetup/setup.sh
+
+    Weird date statement: I've heard justification for 03/13/19 as "it's easier to say"
+
+    (note - mini introduction, where I work)
+
 
 =====
 
@@ -54,19 +47,21 @@ Tai Kedzierski
 Why use bash?
 =============
 
-1. You already know it* a little
+1. You already know it\* a little
 2. You need to use programs' outputs
-    * file management, firewall interaction, automation of CLI tool, automation of obscure tool ...
+    * file management, firewall interaction, configuring and running builds, automation of CLI tool, automation of obscure tool ...
 3. Any program is a library
 4. More advanced syntax than plain old :code:`/bin/sh`
 
-* if you're in some sort of ops or Linux sysadmin role
+\* if you're in some sort of ops or Linux sysadmin role
 
 .. note::
 
+    Or, why **would** you use bash
+
     1. ... if you use Linux command lines
     2. Some programs simply don't have libraries and bindings in your languages
-    3. jq , mysql , ssh , iptables, mount ...
+    3. jq , mysql , ssh , go build, make, iptables, mount ...
     4. but language feature comparison is for another time
 
 =====
@@ -210,8 +205,10 @@ Good Practices
 
     function files:copy() {
         local from_d dest_d
-        from_d="${1:-}"; shift || { echo "No source dir specified"; exit 10; }
-        dest_d="${1:-}"; shift || { echo "No destination dir specified"; exit 10; }
+        from_d="${1:-}"; shift ||
+            { echo "No source dir specified"; exit 10; }
+        dest_d="${1:-}"; shift ||
+            { echo "No destination dir specified"; exit 10; }
 
         #... and the actual activities
     }
@@ -247,7 +244,6 @@ Bash Builder
 * re-use common snippets
 * add help processing
 * add syntax sugars
-* namespace functions
 
 .. note::
 
@@ -261,6 +257,8 @@ Bash Builder
 ------------
 
 And of course, separate out our own code
+
+* namespace functions
 
 .. note::
     
@@ -292,20 +290,14 @@ A travesty!
 
     AGPL licensed because you shoud have to admit to being awful
 
-=====
-
-Other items
-===========
-
-* autohelp
-* bashdoc
-* tarSH
-
 ====
 
 License.txt
 ===========
 
+
+* <https://github.com/taikedz/bash-builder>
+* <https://github.com/taikedz/bash-libs>
 * LGPLv3
 
 .. note::
@@ -327,3 +319,10 @@ Is this useful?
     * Sysadmins who might find this useful?
     * Will exhort their sysadmins too code this way?
     * Why think their Sysadmins masquerade as devops?
+
+=====
+
+Thank You
+=========
+
+<https://fosstodon.org/@taikedz>

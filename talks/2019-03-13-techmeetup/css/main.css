@@ -3,7 +3,7 @@ body {
     color: #bbb;
 }
 
-p, ul, ol, ol ul { font-size: 2em; }
+p, ul, ol, ol ul { font-size: 1.5em; }
 h1 { font-size: 4em; }
 h2 { font-size: 3.5em; }
 h3 { font-size: 3em; }
@@ -14,3 +14,7 @@ p, h1, h2, h3, li {
 
 pre { font-size: 2.5em; }
 
+a {
+    color: #88f
+
+}

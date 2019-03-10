@@ -1,4 +1,19 @@
-##bash-libs: tty.sh @ 6421286a (2.0.1)
+#!/usr/bin/env bash
+
+### Hovercraft launcher Usage:help
+# Simple script to build and run a hovercraft presentation using a python virtual environment
+#
+# hover.sh serve MAINFILE
+#   Serve the target RST file as a hovercraft presentation
+#
+# hover.sh add PYTHON-PACKAGE ...
+#   Add python packages to the virtual environment
+#
+# hover.sh run COMMAND ...
+#   Run a command with the virtual environment activated
+###/doc
+
+##bash-libs: tty.sh @ 6e4f511f (2.1.4)
 
 tty:is_ssh() {
     [[ -n "$SSH_TTY" ]] || [[ -n "$SSH_CLIENT" ]] || [[ "$SSH_CONNECTION" ]]
@@ -8,7 +23,7 @@ tty:is_pipe() {
     [[ ! -t 1 ]]
 }
 
-##bash-libs: colours.sh @ 6421286a (2.0.1)
+##bash-libs: colours.sh @ 6e4f511f (2.1.4)
 
 ### Colours for terminal Usage:bbuild
 # A series of shorthand colour flags for use in outputs, and functions to set your own flags.
@@ -161,7 +176,7 @@ colours:auto() {
 
 colours:auto
 
-##bash-libs: out.sh @ 6421286a (2.0.1)
+##bash-libs: out.sh @ 6e4f511f (2.1.4)
 
 ### Console output handlers Usage:bbuild
 #
@@ -248,7 +263,8 @@ function out:fail {
 function out:error {
     echo "${CBRED}ERROR: ${CRED}$*$CDEF" 1>&2
 }
-##bash-libs: syntax-extensions.sh @ 6421286a (2.0.1)
+
+##bash-libs: syntax-extensions.sh @ 6e4f511f (2.1.4)
 
 ### Syntax Extensions Usage:syntax
 #
@@ -310,7 +326,7 @@ syntax-extensions:use() {
     argidx=1
     while [[ "$argidx" -lt "${#arglist[@]}" ]]; do
         argname="${arglist[$argidx]}"
-        failmsg="\"Internal : could not get '$argname' in function arguments\""
+        failmsg="\"Internal: could not get '$argname' in function arguments\""
         posfailmsg="Internal: positional argument '$argname' encountered after optional argument(s)"
 
         if [[ "$argname" =~ ^\? ]]; then
@@ -319,6 +335,7 @@ syntax-extensions:use() {
 
         elif [[ "$argname" =~ ^\* ]]; then
             [[ "$pos_ok" != false ]] || out:fail "$posfailmsg"
+            echo "[[ '${argname:1}' != \"$argone\" ]] || out:fail \"Internal: Local name [$argname] equals upstream [$argone]. Rename [$argname] (suggestion: [*p_${argname:1}])\""
             echo "declare -n${dec_scope} ${argname:1}=$argone; shift || out:fail $failmsg"
 
         else
@@ -361,7 +378,7 @@ args:use:local() {
     syntax-extensions:use:local "$@"
 }
 
-##bash-libs: autohelp.sh @ 6421286a (2.0.1)
+##bash-libs: autohelp.sh @ 6e4f511f (2.1.4)
 
 ### Autohelp Usage:bbuild
 #
@@ -560,7 +577,9 @@ autohelp:check:section() {
     done
 }
 
-##bash-libs: abspath.sh @ 6421286a (2.0.1)
+##bash-libs: app/pyvenv.sh @ 6e4f511f (2.1.4)
+
+##bash-libs: abspath.sh @ 6e4f511f (2.1.4)
 
 ### abspath:path RELATIVEPATH [ MAX ] Usage:bbuild
 # Returns the absolute path of a file/directory
@@ -611,7 +630,7 @@ function abspath:resolve_dotdot {
 
 BBUILD_PYTHONVENV=""
 
-### pyvenv:setup DIRNAME [PYTHONVERSION] Usage:bashdoc
+### pyvenv:setup DIRNAME [PYTHONVERSION] Usage:bbuild
 # Create a virtual environment directory
 #
 # DIRNAME - the name of the directory to be a virtual environment
@@ -628,8 +647,10 @@ pyvenv:setup() {
     virtualenv "${useversion[@]:1}" "$venvdir"
 }
 
-### pyvenv:ensure DIRNAME [PYTHONVERSION] Usage:bashdoc
+### pyvenv:ensure DIRNAME [PYTHONVERSION] Usage:bbuild
 # Ensure a virtual environment directory is present; if not, create it.
+#
+# If a ./requirements.txt file exists, install requirements during creation.
 #
 # DIRNAME - the name of the directory to be a virtual environment
 # PYTHONVERSION - version of python to use, uses virtualenv's default if not specified
@@ -647,7 +668,7 @@ pyvenv:ensure() {
     fi
 }
 
-### pyvenv:activate DIRNAME Usage:bashdoc
+### pyvenv:activate DIRNAME Usage:bbuild
 # Activate a virtual environment directory
 #
 # DIRNAME - the name of the virtual environment directory.
@@ -663,7 +684,7 @@ pyvenv:activate() {
     fi
 }
 
-### pyvenv:deactivate Usage:bashdoc
+### pyvenv:deactivate Usage:bbuild
 # Deactivate a virtual environment directory
 ###/doc
 pyvenv:deactivate() {
@@ -675,7 +696,7 @@ pyvenv:deactivate() {
     fi
 }
 
-### pyvenv:add LIBNAMES ... Usage:bashdoc
+### pyvenv:add LIBNAMES ... Usage:bbuild
 # Add libraries to the virtual environment and save in a sidecar requirements.txt file
 #
 # returns: virtualenv code on failure, or
@@ -690,7 +711,63 @@ pyvenv:add() {
         return 101
     fi
 }
-##bash-libs: bincheck.sh @ 6421286a (2.0.1)
+##bash-libs: app/hovercraft.sh @ 6e4f511f (2.1.4)
+
+##bash-libs: varify.sh @ 6e4f511f (2.1.4)
+
+### Varify Usage:bbuild
+# Make a string into a valid variable name or file name
+#
+# Collapses any string of invalid characters into a single underscore
+#
+# For example
+#
+# 	varify:var "http://example.com"
+#
+# returns
+#
+# 	http_example.com
+#
+###/doc
+
+### varify:var Usage:bbuild
+#
+# Valid characters for varify:var are:
+#
+# * a-z
+# * A-Z
+# * 0-9
+# * underscore ("_")
+###/doc
+function varify:var {
+    echo "$*" | sed -r 's/[^a-zA-Z0-9_]/_/g'
+}
+
+### varify:fil Usage:bbuild
+#
+# Valid characters for varify:fil are:
+#
+# * a-z
+# * A-Z
+# * 0-9
+# * underscore ("_")
+# * dash ("-")
+# * period (".")
+#
+# Can be used to produce filenames.
+#
+###/doc
+function varify:fil {
+    echo "$*" | sed -r 's/[^a-zA-Z0-9_.-]/_/g'
+}
+
+##bash-libs: app/webbrowser.sh @ 6e4f511f (2.1.4)
+
+### webbrowser Usage:bbuild
+# Library to control web browsers
+###/doc
+
+##bash-libs: bincheck.sh @ 6e4f511f (2.1.4)
 
 ### bincheck:get COMMANDS ... Usage:bbuild
 #
@@ -762,70 +839,86 @@ bincheck:path() {
     
     } || echo "$binname"
 }
-##bash-libs: varify.sh @ 6421286a (2.0.1)
 
-### Varify Usage:bbuild
-# Make a string into a valid variable name or file name
+### webbrowser:visit URL Usage:bbuild
+# Visit a URL in a graphical web broswer.
 #
-# Collapses any string of invalid characters into a single underscore
-#
-# For example
-#
-# 	varify:var "http://example.com"
-#
-# returns
-#
-# 	http_example.com
-#
+# Will try to get the system's web browser, or try to locate any one of a wide selection of browsers.
 ###/doc
+webbrowser:visit() {
+    . <(args:use:local url -- "$@") ; 
+    local runtime
 
-### varify:var Usage:bbuild
-#
-# Valid characters for varify:var are:
-#
-# * a-z
-# * A-Z
-# * 0-9
-# * underscore ("_")
-###/doc
-function varify:var {
-    echo "$*" | sed -r 's/[^a-zA-Z0-9_]/_/g'
+    local browser_options=(
+        sensible-browser # Ubuntu's shorthand for the system browser
+        gnome-www-browser # Gnome's shorthand
+        firefox opera chromium epiphany # popular browsers by bin name
+        x-www-browser www-browser # System terminal-based browsers
+        elinks
+    )
+    runtime="$(bincheck:get "${browser_options[@]}")" || return 1
+
+    if [[ -z "$runtime" ]]; then
+        "$runtime" "$url"
+        return
+    fi
+    return 127
 }
 
-### varify:fil Usage:bbuild
-#
-# Valid characters for varify:fil are:
-#
-# * a-z
-# * A-Z
-# * 0-9
-# * underscore ("_")
-# * dash ("-")
-# * period (".")
-#
-# Can be used to produce filenames.
-#
-###/doc
-function varify:fil {
-    echo "$*" | sed -r 's/[^a-zA-Z0-9_.-]/_/g'
-}
-
-### hovercraft:serve MAINFILE Usage:bashdoc
-# Build the presentation based on MAINFILE
-#
-# Opens a browser session with the presentation
+### hovercraft:build MAINFILE Usage:bbuild
+# Build the presentation from the MAINFILE (.rst file), and print the path of the compiled presentation
 ###/doc
 
-hovercraft:serve() {
+hovercraft:build() {
     . <(args:use:local mainfile -- "$@") ; 
     mkdir -p presentation-hovercraft
     local pdir="$(mktemp -d "presentation-hovercraft/$(varify:fil "$mainfile")-XXXX")"
 
     hovercraft "$mainfile" "$pdir"
-    local runtime
-    runtime="$(bincheck:get sensible-browser firefox chromium chrome gnome-www-browser epiphany x-www-browser www-browser)" || return 1
 
-    "$runtime" "file://$PWD/$pdir/index.html"
+    echo "$pdir/index.html"
+}
+
+### hovercraft:show MAINFILE [BROWSER] Usage:bbuild
+# Build the presentation based on MAINFILE ;
+#
+# Opens a browser session with the presentation.
+#
+# If browser is not specified, attempts to use the default system browser.
+###/doc
+
+hovercraft:show() {
+    . <(args:use:local mainfile ?browser -- "$@") ; 
+    local presentation="file://$PWD/$(hovercraft:build "$mainfile")"
+
+    if [[ -z "$browser" ]]; then
+        webbrowser:visit "$presentation"
+    else
+        "$browser" "$presentation"
+    fi
+}
+
+### hovercraft:serve MAINFILE [COMMAND ...] Usage:bbuild
+# Build the presentation base on MAINFILE ;
+#
+# Use the specified command to serve the presentation through a web server.
+#
+# By default, the command is `python3 -m http.server 8090`
+# run in the context of the built presentation's directory
+###/doc
+
+hovercraft:serve() {
+    . <(args:use:local mainfile -- "$@") ; 
+    local presentation_file="$(hovercraft:build "$mainfile")"
+    local presentation_dir="$(dirname "$presentation_file")"
+
+    cd "$presentation_dir"
+
+    if [[ -z "$*" ]]; then
+        python3 -m http.server 8090
+    else
+        "$@"
+    fi
 }
 
 main() {
