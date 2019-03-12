@@ -923,6 +923,8 @@ hovercraft:serve() {
 
 main() {
     . <(args:use:local ?action -- "$@") ; 
+    autohelp:check "$@" "$action"
+
     out:info "Ensuring hovercraft ..."
     pyvenv:ensure hovercraft-venv python3
 

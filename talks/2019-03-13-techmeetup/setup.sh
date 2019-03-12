@@ -23,22 +23,19 @@ open_view() {
 
 tk="${1:-}"; shift || {
     echo "Specify my github.com/account folder path"
+    exit
 }
 
 # Open last window to use first
 
-firefox https://github.com/taikedz/bash-builder/tree/master/docs
+firefox "https://github.com/taikedz/bash-builder/blob/master/docs/writing_clean_bash.md"
 
-# Second-to-last
-
-open_window "$tk/bash-libs"
-open_tab "$tk/alpacka"
+open_window "$tk/webserver.sh"
 open_tab "$tk/git-shortcuts"
-open_tab "$tk/webserver.sh"
+#open_tab "$tk/alpacka"
+open_tab "$tk/bash-libs"
 
-# First window
+open_tab "$tk/bash-builder-presentations/talks/2019-03-13-techmeetup/scripts" 'vim *-portplug.sh 05-ports.sh 05-help.sh'
 
-open_window "$tk/our-pxe" "vim bin/remaster.sh"
 open_tab "$tk/remaster.sh" "vim remaster.sh"
-
-open_tab "$tk/bash-builder-presentations/talks/2019-03-13-techmeetup/scripts" 'vim *-portplug.sh' #'vim 01-portplug.sh  02-portplug.sh  03-portplug.sh  04-portplug.sh  05-portplug.sh'
+open_tab "$tk/our-pxe" "vim bin/remaster.sh" # The bad one ??

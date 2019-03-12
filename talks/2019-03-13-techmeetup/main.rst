@@ -17,7 +17,10 @@ Tai Kedzierski
 
     Weird date statement: I've heard justification for 03/13/19 as "it's easier to say"
 
-    (note - mini introduction, where I work)
+    * I am Tai
+    * I am a devops engineer at medical devices company Optos in Rosyth
+    * I maintain the servers for our various web platforms using bash and docker
+    * running, backups, etc
 
 
 =====
@@ -225,7 +228,7 @@ Good Practices
 
 .. code:: sh
 
-    $%function copyfiles(from_d dest_d) {
+    $%function files:copy(from_d dest_d) {
 
         #... straight to the actual activities
     }
@@ -275,9 +278,7 @@ Other scripts
 =============
 
 * test.sh
-* alpacka
 * git shortcuts
-* hovercraft
 
 =====
 
@@ -296,16 +297,15 @@ License.txt
 ===========
 
 
-* <https://github.com/taikedz/bash-builder>
-* <https://github.com/taikedz/bash-libs>
-* LGPLv3
+* <https://github.com/taikedz/bash-builder> (GPLv3)
+* <https://github.com/taikedz/bash-libs> (LGPLv3)
 
 .. note::
 
-    * Bash scripts are distributed as source anyway
     * Encourage bash scripters to re-use code
     * No stipulations on surrounding project
         * Most importantly: make bash sciprting better
+    * Bash scripts are distributed as source anyway
 
 =====
 
@@ -315,6 +315,8 @@ Hands up!
 Is this useful?
 
 .. note::
+
+    (Show the browser window where to find the long-form tips)
 
     * Sysadmins who might find this useful?
     * Will exhort their sysadmins too code this way?

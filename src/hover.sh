@@ -21,6 +21,8 @@
 #%include app/hovercraft.sh
 
 $%function main(?action) {
+    autohelp:check "$@" "$action"
+
     out:info "Ensuring hovercraft ..."
     pyvenv:ensure hovercraft-venv python3
 
