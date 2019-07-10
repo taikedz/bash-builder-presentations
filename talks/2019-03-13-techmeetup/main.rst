@@ -297,8 +297,8 @@ License.txt
 ===========
 
 
-* <https://github.com/taikedz/bash-builder> (GPLv3)
-* <https://github.com/taikedz/bash-libs> (LGPLv3)
+* <https://gitlab.com/taikedz/bash-builder> (GPLv3)
+* <https://gitlab.com/taikedz/bash-libs> (LGPLv3)
 
 .. note::
 
@@ -320,7 +320,7 @@ Is this useful?
 
     * Sysadmins who might find this useful?
     * Will exhort their sysadmins too code this way?
-    * Why think their Sysadmins masquerade as devops?
+    * Who think their Sysadmins masquerade as devops?
 
 =====
 
