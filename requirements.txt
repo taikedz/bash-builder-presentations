@@ -3,7 +3,7 @@ docutils==0.14
 hovercraft==2.6
 lxml==6.1.0
 pathtools==0.1.2
-Pygments==2.15.0
+Pygments==2.20.0
 PyYAML==5.4
 svg.path==3.0
 watchdog==0.9.0
